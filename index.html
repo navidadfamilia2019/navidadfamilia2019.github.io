@@ -29,7 +29,7 @@
                     </v-toolbar-items>
                     <v-toolbar-title v-else>
                         <v-icon>mdi-account</v-icon>
-                        {{ username }}
+                        {{ user.nombre }}
                     </v-toolbar-title>
                 </v-toolbar>
 
@@ -69,23 +69,32 @@
                                 </v-avatar>
                                 <v-spacer></v-spacer>
                                 <h1 class="white--text">
-                                    {{username}}
+                                    {{user.nombre}}
                                 </h1>
                                 <v-spacer></v-spacer>
                             </v-card-title>
+                            <br />
                             <v-card-text class="grey lighten-3">
                                 <center>
-                                    <h2>ESPERAR SORTEO</h2>
-                                    <v-chip color="green darken-3">
-                                        <v-avatar class="yellow darken-2">
-                                            <v-icon color="red darken-3">mdi-star</v-icon>
-                                        </v-avatar>
-                                    </v-chip>
+                                    <h2 v-if="user.elegido == null">ESPERAR SORTEO</h2>
+                                    <h2 v-else>TE HA TOCADO: {{user.elegido}}</h2>
                                     <br />
-                                    <small>Espera para poder ver quien te tocó!</small>
+                                    <hr />
                                 </center>
+                                <v-list v-if="lista.length > 0" rounded>
+                                    <v-subheader>PARTICIPANTES</v-subheader>
+                                    <v-list-item-group v-model="item" color="red darken-3">
+                                        <v-list-item v-for="(item, i) in lista" :key="i">
+                                            <v-list-item-icon>
+                                                <v-icon color="yellow darken-3">mdi-star</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title v-text="item.nombre"></v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                    </v-list-item-group>
+                                </v-list>
                             </v-card-text>
-
                         </v-card>
                     </v-layout>
                 </v-container>
@@ -113,7 +122,18 @@
                 snackcolor: "",
                 logged: false,
                 loading: false,
-                db: null
+                db: null,
+                lista: [],
+                user: {},
+                item: 0,
+                headers: [
+                    {
+                        text: 'Nombre',
+                        align: 'left',
+                        sortable: false,
+                        value: 'nombre',
+                    }
+                ],
             },
             methods: {
                 initFirebase() {
@@ -132,6 +152,7 @@
                     this.db = firebase.firestore();
                 },
                 login() {
+                    this.loading = true
                     if (this.username != '' && this.password != '') {
                         var self = this
                         this.db.collection("usuarios").where("nombre", "==", this.username).where("password", "==", this.password)
@@ -141,14 +162,18 @@
                                 if (result.length > 0) {
                                     querySnapshot.forEach(function (doc) {
                                         // doc.data() is never undefined for query doc snapshots
-                                        console.log(doc.id, " => ", doc.data());
+                                        console.log(doc.id, " => ", doc.data().nombre);
+                                        self.user = Object.assign({}, doc.data())
                                         self.snackbar = true
+                                        self.loading = false
                                         self.logged = true
                                         self.snackcolor = "success"
-                                        self.snackbartext = "Ingreso exitoso! " + doc.data().nombre
+                                        self.snackbartext = "Ingreso exitoso! " + self.user.nombre
+                                        self.getParticipantes(doc.data().nombre)
                                     });
                                 } else {
                                     self.snackbar = true
+                                    self.loading = false
                                     self.snackcolor = "error"
                                     self.snackbartext = "Usuario no encontrado"
                                 }
@@ -157,13 +182,40 @@
                                 self.snackbar = true
                                 self.snackcolor = "error"
                                 self.snackbartext = "Error al login"
+                                self.loading = false
                                 console.log("Error getting documents: ", error);
                             });
                     } else {
                         this.snackbar = true
                         this.snackcolor = "error"
                         this.snackbartext = "Llene los campos"
+                        this.loading = false
                     }
+                },
+                getParticipantes(nombre) {
+                    let self = this
+                    this.lista = []
+                    this.db.collection("usuarios").get()
+                        .then(function (querySnapshot) {
+                            var list = []
+                            var cont = 0
+                            querySnapshot.forEach(function (doc) {
+                                if (doc.data().nombre == nombre) {
+                                    self.item = cont
+                                }
+                                list.push(doc.data())
+                                cont++
+                            });
+                            self.lista = list
+                            self.loading = false
+                        })
+                        .catch(function (error) {
+                            self.snackbar = true
+                            self.snackcolor = "error"
+                            self.snackbartext = "Error al consultar participantes"
+                            self.loading = false
+                            console.log("Error getting documents: ", error);
+                        });
                 }
             }
         })
