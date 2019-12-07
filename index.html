@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
     <link rel="icon" href="favicon.png" />
@@ -24,17 +24,30 @@
                 </v-toolbar>
                 <v-container>
                     <v-layout align-center justify-center>
-                        <v-card width="400" color="yellow lighten-5">
+                        <v-card width="400" color="grey lighten-4">
+                            <v-card-title>
+                                <v-spacer></v-spacer>
+                                <h3>BIENVENIDO</h3>
+                                <v-spacer></v-spacer>
+                            </v-card-title>
+                            <v-card-text align="center">
+                                Sorteo Familia Brunal - Salas - Garzón
+                                <br>
+                            </v-card-text>
                             <v-container>
                                 <center>
+                                    <div v-if="sorteo.realizado == false">
+                                        <small>(Si no te has registrado, debes hacerlo antes para poder
+                                            ingresar)</small>
+                                        <v-btn dark block color="primary" href="signup.html">
+                                            Registrarse
+                                            <v-icon right>mdi-account-plus</v-icon>
+                                        </v-btn>
+                                        <br>
+                                    </div>
                                     <v-btn dark block color="green darken-3" href="home.html">
                                         Ingresar
                                         <v-icon right>mdi-account-check</v-icon>
-                                    </v-btn>
-                                    <br>
-                                    <v-btn dark block color="primary" href="signup.html">
-                                        Registrarse
-                                        <v-icon right>mdi-account-plus</v-icon>
                                     </v-btn>
                                 </center>
                     </v-layout>
@@ -55,13 +68,50 @@
         const app = new Vue({
             el: '#app',
             vuetify: new Vuetify(),
-            data: {
+            beforeMount() {
+                this.initFirebase()
+                this.getEstadoSorteo()
             },
+            data: {
+                sorteo: {}
+            },
+            methods: {
+                initFirebase() {
+                    var firebaseConfig = {
+                        apiKey: "AIzaSyAIkUie5qjlEObq7VMqa6jJhn7k76G6iU0",
+                        authDomain: "navidad-2019.firebaseapp.com",
+                        databaseURL: "https://navidad-2019.firebaseio.com",
+                        projectId: "navidad-2019",
+                        storageBucket: "navidad-2019.appspot.com",
+                        messagingSenderId: "114178192273",
+                        appId: "1:114178192273:web:661b9035f61d330f00a030",
+                        measurementId: "G-RQ883D96YY"
+                    };
+                    // Initialize Firebase
+                    firebase.initializeApp(firebaseConfig);
+                    this.db = firebase.firestore();
+                },
+                getEstadoSorteo() {
+                    let self = this
+                    this.sorteo = {}
+                    this.db.collection("sorteo").get()
+                        .then(function (querySnapshot) {
+                            var list = []
+                            var cont = 0
+                            querySnapshot.forEach(function (doc) {
+                                self.sorteo = Object.assign({}, doc.data())
+                            });
+                        })
+                        .catch(function (error) {
+                            console.log("Error getting documents: ", error);
+                        });
+                },
+            }
         })
     </script>
     <style>
         #app {
-            font-family: 'Ubuntu', sans-serif;
+            font-family: 'Nunito', sans-serif;
         }
     </style>
 </body>

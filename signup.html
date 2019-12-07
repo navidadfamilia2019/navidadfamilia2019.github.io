@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
   <link rel="icon" href="favicon.png" />
@@ -22,8 +22,8 @@
           <div class="flex-grow-1"></div>
           <!-- v-if="$vuetify.breakpoint.smAndUp" -->
           <v-toolbar-items>
-            <v-btn text href="home.html">
-              <v-icon>mdi-account-check</v-icon>
+            <v-btn text color="white" href="home.html">
+              <v-icon color="green lighten-3">mdi-account-check</v-icon>
               Ingresar
             </v-btn>
           </v-toolbar-items>
@@ -38,8 +38,9 @@
                 <v-spacer></v-spacer>
               </v-card-title>
               <v-container>
-                <v-text-field solo label="Usuario" v-model="username"></v-text-field>
-                <v-text-field solo label="Contraseña" type="password" v-model="password">
+                <v-text-field solo label="Nombre de Usuario (corto)" v-model="username"></v-text-field>
+                <v-text-field solo label="Contraseña" type="password" v-model="password"></v-text-field>
+                <v-text-field solo label="Confirmar contraseña" type="password" v-model="passwordConfirm">
                 </v-text-field>
                 <center>
                   <v-btn dark color="primary" @click="register()" :loading="loading">
@@ -76,6 +77,7 @@
       data: {
         username: "",
         password: "",
+        passwordConfirm: "",
         snackbar: false,
         snackbartext: "",
         snackcolor: "",
@@ -101,31 +103,38 @@
         },
         register() {
           this.loading = true
-          if (this.username != '' && this.password != '') {
-            var self = this
-            this.db.collection("usuarios").add({
-              nombre: this.username,
-              password: this.password,
-              elegido: null
-            })
-              .then(function (docRef) {
-                self.snackbar = true
-                self.logged = true
-                self.loading = false
-                self.snackcolor = "success"
-                self.snackbartext = "Registro exitoso! " + self.username + ". Ahora ingrese con sus datos"
-                setTimeout(()=> {
-                  window.location.href = "home.html";
-                }, 2000)
-                console.log("Document written with ID: ", docRef.id);
+          if (this.username != '' && this.password != '' && this.passwordConfirm != '') {
+            if (this.password != this.passwordConfirm) {
+              this.snackbar = true
+              this.snackcolor = "error"
+              this.snackbartext = "Las contraseñas deben coincidir"
+              this.loading = false
+            } else {
+              var self = this
+              this.db.collection("usuarios").add({
+                nombre: this.username,
+                password: this.password,
+                elegido: null
               })
-              .catch(function (error) {
-                console.error("Error adding document: ", error);
-                self.snackbar = true
-                self.snackcolor = "error"
-                self.snackbartext = "Error al registrar"
-                self.loading = false
-              });
+                .then(function (docRef) {
+                  self.snackbar = true
+                  self.logged = true
+                  self.loading = false
+                  self.snackcolor = "success"
+                  self.snackbartext = "Registro exitoso! " + self.username + ". Ahora ingrese con sus datos"
+                  setTimeout(() => {
+                    window.location.href = "home.html";
+                  }, 2000)
+                  console.log("Document written with ID: ", docRef.id);
+                })
+                .catch(function (error) {
+                  console.error("Error adding document: ", error);
+                  self.snackbar = true
+                  self.snackcolor = "error"
+                  self.snackbartext = "Error al registrar"
+                  self.loading = false
+                });
+            }
           } else {
             this.snackbar = true
             this.snackcolor = "error"
@@ -139,7 +148,7 @@
   </script>
   <style>
     #app {
-      font-family: 'Ubuntu', sans-serif;
+      font-family: 'Nunito', sans-serif;
     }
   </style>
 </body>

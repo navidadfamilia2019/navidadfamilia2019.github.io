@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
     <link rel="icon" href="favicon.png" />
@@ -22,12 +22,12 @@
                     <div class="flex-grow-1"></div>
                     <!-- v-if="$vuetify.breakpoint.smAndUp" -->
                     <v-toolbar-items>
-                        <v-btn v-if="!logged" color="white" text href="signup.html">
-                            <v-icon left>mdi-account-plus</v-icon>
+                        <v-btn v-if="!logged && sorteo.realizado == false" color="white" text href="signup.html">
+                            <v-icon left color="blue lighten-3">mdi-account-plus</v-icon>
                             Registro
                         </v-btn>
                         <v-btn v-else color="white" text href="index.html">
-                            <v-icon left>mdi-backspace</v-icon>
+                            <v-icon left color="yellow lighten-3">mdi-backspace</v-icon>
                             SALIR
                         </v-btn>
                     </v-toolbar-items>
@@ -42,7 +42,7 @@
                                 <v-spacer></v-spacer>
                             </v-card-title>
                             <v-container>
-                                <v-text-field solo label="Usuario" v-model="username"></v-text-field>
+                                <v-text-field solo label="Nombre de Usuario" v-model="username"></v-text-field>
                                 <v-text-field solo label="Contraseña" type="password" v-model="password">
                                 </v-text-field>
                                 <center>
@@ -86,11 +86,11 @@
                                     <hr />
                                     <br />
                                     <h2 v-if="sorteo.realizado == false">ESPERAR SORTEO</h2>
-                                    <div>
+                                    <div v-else>
                                         <v-toolbar flat dark color="primary" v-if="user.elegido == null">
                                             <h2>REALIZAR TU SORTEO</h2>
                                             <v-spacer></v-spacer>
-                                            <v-btn large color="green" dark @click="sort()">REALIZAR</v-btn>
+                                            <v-btn large color="green" dark @click="sort()">SORTEAR!</v-btn>
                                         </v-toolbar>
                                         <h2 v-else>TE HA TOCADO: <label class="primary--text">{{user.elegido}}</label>
                                         </h2>
@@ -98,7 +98,7 @@
                                     <br />
                                     <hr />
                                 </center>
-                                <v-list v-if="lista.length > 0" rounded>
+                                <v-list v-if="!loadingSorteo" rounded>
                                     <v-subheader>PARTICIPANTES</v-subheader>
                                     <v-list-item-group v-model="item" color="primary">
                                         <v-list-item v-for="(item, i) in lista" :key="i">
@@ -118,6 +118,19 @@
                                         </v-list-item>
                                     </v-list-item-group>
                                 </v-list>
+                                <v-card v-else flat>
+                                    <v-container>
+                                        <center>
+                                            <h1>Sorteando...</h1>
+                                            <br>
+                                            <v-progress-circular :size="100" :width="15" indeterminate color="primary">
+                                            </v-progress-circular>
+                                            <br />
+                                            <h3>Obteniendo a tu elegido aleatoriamente</h3>
+                                        </center>
+                                    </v-container>
+
+                                </v-card>
                             </v-card-text>
                         </v-card>
                     </v-layout>
@@ -147,6 +160,7 @@
                 snackcolor: "",
                 logged: false,
                 loading: false,
+                loadingSorteo: false,
                 db: null,
                 lista: [],
                 user: {},
@@ -211,7 +225,7 @@
                         this.loading = false
                     }
                 },
-                getParticipantes(nombre) {
+                async getParticipantes(nombre) {
                     let self = this
                     self.loading = true
                     this.lista = []
@@ -258,16 +272,57 @@
                             console.log("Error getting documents: ", error);
                         });
                 },
-                sort() {
-                    console.log("SORTEO!");
-                    
+                async sort() {
+                    this.loadingSorteo = true
+                    var prom= await this.getParticipantes(this.user.name)
+                    var self = this
+                    var yaElegidos = []
+                    var elegibles = []
+                    console.log("TODOS", this.lista);
+                    this.lista.forEach(element => {
+                        if (element.elegido != null) {
+                            yaElegidos.push(element.elegido)
+                        }
+                    })
+                    this.lista.forEach(element => {
+                        if (element.nombre != this.user.nombre) {
+                            if (yaElegidos.indexOf(element.nombre) < 0) {
+                                elegibles.push(element.nombre)
+                            }
+                        }
+                    })
+                    console.log("ELEGIDOS", yaElegidos);
+                    console.log("ELEGIBLES", elegibles);
+                    var numero = this.getRandomInt(0, elegibles.length)
+                    console.log("SORTEO!", numero);
+                    try {
+                        this.db.collection("usuarios").doc(this.user.id).set({
+                            nombre: this.user.nombre,
+                            password: this.user.password,
+                            elegido: elegibles[numero]
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
+                    setTimeout(() => {
+                        self.loadingSorteo = false;
+                        self.user.elegido = elegibles[numero]
+                        self.getParticipantes(this.user.nombre)
+                        self.snackbar = true
+                        self.snackcolor = "success"
+                        self.snackbartext = "Sorteo exitoso! Te ha tocado " + this.user.elegido
+                        // this.login()
+                    }, 3000)
+                },
+                getRandomInt(min, max) {
+                    return Math.floor(Math.random() * (max - min)) + min;
                 }
             }
         })
     </script>
     <style>
         #app {
-            font-family: 'Ubuntu', sans-serif;
+            font-family: 'Nunito', sans-serif;
         }
     </style>
 </body>
