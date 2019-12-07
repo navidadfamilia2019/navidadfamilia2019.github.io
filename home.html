@@ -85,14 +85,14 @@
                                     <br />
                                     <hr />
                                     <br />
-                                    <h2 v-if="sorteo.realizado == false">ESPERAR SORTEO</h2>
+                                    <h2 v-if="sorteo.realizado == false">DEBES ESPERAR A QUE EL ADMINISTRADOR HABILITE EL SORTEO</h2>
                                     <div v-else>
                                         <v-toolbar flat dark color="primary" v-if="user.elegido == null">
                                             <h2>REALIZAR TU SORTEO</h2>
                                             <v-spacer></v-spacer>
                                             <v-btn large color="green" dark @click="sort()">SORTEAR!</v-btn>
                                         </v-toolbar>
-                                        <h2 v-else>TE HA TOCADO: <label class="primary--text">{{user.elegido}}</label>
+                                        <h2 v-else>TE HA TOCADO: <label class="primary--text">{{user.elegido.toUpperCase()}}</label>
                                         </h2>
                                     </div>
                                     <br />
@@ -225,7 +225,7 @@
                         this.loading = false
                     }
                 },
-                async getParticipantes(nombre) {
+                getParticipantes(nombre) {
                     let self = this
                     self.loading = true
                     this.lista = []
@@ -251,6 +251,24 @@
                             console.log("Error getting documents: ", error);
                         });
                 },
+                async getActivos() {
+                    let self = this
+                    var list = []
+                    await this.db.collection("usuarios").get()
+                        .then(function (querySnapshot) {
+                            querySnapshot.forEach(function (doc) {
+                                list.push(doc.data())
+                            });
+                        })
+                        .catch(function (error) {
+                            self.snackbar = true
+                            self.snackcolor = "error"
+                            self.snackbartext = "Error al consultar participantes"
+                            self.loading = false
+                            console.log("Error getting documents: ", error);
+                        });
+                    return list
+                },
                 getEstadoSorteo() {
                     let self = this
                     self.loading = true
@@ -274,45 +292,46 @@
                 },
                 async sort() {
                     this.loadingSorteo = true
-                    // var prom= await this.getParticipantes(this.user.name)
+                    var activos = await this.getActivos()
                     var self = this
                     var yaElegidos = []
                     var elegibles = []
-                    console.log("TODOS", this.lista);
-                    this.lista.forEach(element => {
+                    // console.log("TODOS", activos);
+                    activos.forEach(element => {
+                        console.log(element);
+
                         if (element.elegido != null) {
                             yaElegidos.push(element.elegido)
                         }
                     })
-                    this.lista.forEach(element => {
+                    activos.forEach(element => {
                         if (element.nombre != this.user.nombre) {
                             if (yaElegidos.indexOf(element.nombre) < 0) {
                                 elegibles.push(element.nombre)
                             }
                         }
                     })
-                    console.log("ELEGIDOS", yaElegidos);
-                    console.log("ELEGIBLES", elegibles);
+                    // console.log("ELEGIDOS", yaElegidos);
+                    // console.log("ELEGIBLES", elegibles);
                     var numero = this.getRandomInt(0, elegibles.length)
-                    console.log("SORTEO!", numero);
+                    // console.log("SORTEO!", numero);
                     try {
                         this.db.collection("usuarios").doc(this.user.id).set({
                             nombre: this.user.nombre,
                             password: this.user.password,
                             elegido: elegibles[numero]
                         });
+                        setTimeout(() => {
+                            self.loadingSorteo = false;
+                            self.user.elegido = elegibles[numero]
+                            self.getParticipantes(this.user.nombre)
+                            self.snackbar = true
+                            self.snackcolor = "success"
+                            self.snackbartext = "Sorteo exitoso! Te ha tocado " + this.user.elegido
+                        }, 3000)
                     } catch (error) {
                         console.log(error);
                     }
-                    setTimeout(() => {
-                        self.loadingSorteo = false;
-                        self.user.elegido = elegibles[numero]
-                        self.getParticipantes(this.user.nombre)
-                        self.snackbar = true
-                        self.snackcolor = "success"
-                        self.snackbartext = "Sorteo exitoso! Te ha tocado " + this.user.elegido
-                        // this.login()
-                    }, 3000)
                 },
                 getRandomInt(min, max) {
                     return Math.floor(Math.random() * (max - min)) + min;
