@@ -38,8 +38,8 @@
                 <v-spacer></v-spacer>
               </v-card-title>
               <v-container>
-                <v-text-field outlined label="Usuario" v-model="username"></v-text-field>
-                <v-text-field outlined label="Contraseña" type="password" v-model="password">
+                <v-text-field solo label="Usuario" v-model="username"></v-text-field>
+                <v-text-field solo label="Contraseña" type="password" v-model="password">
                 </v-text-field>
                 <center>
                   <v-btn dark color="primary" @click="register()" :loading="loading">

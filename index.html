@@ -21,16 +21,16 @@
 
                     <div class="flex-grow-1"></div>
                     <!-- v-if="$vuetify.breakpoint.smAndUp" -->
-                    <v-toolbar-items v-if="!logged">
-                        <v-btn text href="signup.html">
+                    <v-toolbar-items>
+                        <v-btn v-if="!logged" text href="signup.html">
                             <v-icon left>mdi-account-plus</v-icon>
                             Registro
                         </v-btn>
+                        <v-btn v-else text href="index.html">
+                            <v-icon left>mdi-backspace</v-icon>
+                            SALIR
+                        </v-btn>
                     </v-toolbar-items>
-                    <v-toolbar-title v-else>
-                        <v-icon>mdi-account</v-icon>
-                        {{ user.nombre }}
-                    </v-toolbar-title>
                 </v-toolbar>
 
                 <v-container>
@@ -63,33 +63,58 @@
 
                     <v-layout align-center justify-center v-if="logged">
                         <v-card width="600">
-                            <v-card-title class="green darken-3">
+                            <v-toolbar flat class="green darken-3">
                                 <v-avatar color="red darken-3">
-                                    <v-icon large color="yellow darken-2">mdi-account-circle</v-icon>
+                                    <v-icon large color="yellow darken-2">mdi-pine-tree</v-icon>
                                 </v-avatar>
                                 <v-spacer></v-spacer>
                                 <h1 class="white--text">
-                                    {{user.nombre}}
+                                    {{user.nombre.toUpperCase()}}
                                 </h1>
                                 <v-spacer></v-spacer>
-                            </v-card-title>
-                            <br />
+                                <v-avatar color="red darken-3">
+                                    <v-icon large color="yellow darken-2">mdi-pine-tree</v-icon>
+                                </v-avatar>
+                            </v-toolbar>
+                            <v-progress-linear v-if="loading" indeterminate color="yellow darken-2"></v-progress-linear>
                             <v-card-text class="grey lighten-3">
                                 <center>
-                                    <h2 v-if="user.elegido == null">ESPERAR SORTEO</h2>
-                                    <h2 v-else>TE HA TOCADO: {{user.elegido}}</h2>
+                                    <h2 v-if="sorteo.realizado == false">ESTADO DEL SORTEO: <label class="red--text">NO
+                                            DISPONIBLE AÚN</label></h2>
+                                    <h2 v-else>ESTADO DEL SORTEO: <label class="green--text">DISPONIBLE
+                                            {{sorteo.fecha}}</label></h2>
+                                    <br />
+                                    <hr />
+                                    <br />
+                                    <h2 v-if="sorteo.realizado == false">ESPERAR SORTEO</h2>
+                                    <div>
+                                        <v-toolbar flat v-if="user.elegido == null">
+                                            <h2>REALIZAR TU SORTEO</h2>
+                                            <v-spacer></v-spacer>
+                                            <v-btn large color="green" dark>REALIZAR</v-btn>
+                                        </v-toolbar>
+                                        <h2 v-else>TE HA TOCADO: <label class="primary--text">{{user.elegido}}</label>
+                                        </h2>
+                                    </div>
                                     <br />
                                     <hr />
                                 </center>
                                 <v-list v-if="lista.length > 0" rounded>
                                     <v-subheader>PARTICIPANTES</v-subheader>
-                                    <v-list-item-group v-model="item" color="red darken-3">
+                                    <v-list-item-group v-model="item" color="primary">
                                         <v-list-item v-for="(item, i) in lista" :key="i">
                                             <v-list-item-icon>
                                                 <v-icon color="yellow darken-3">mdi-star</v-icon>
                                             </v-list-item-icon>
                                             <v-list-item-content>
-                                                <v-list-item-title v-text="item.nombre"></v-list-item-title>
+                                                <v-list-item-title>{{item.nombre.toUpperCase()}}</v-list-item-title>
+                                                <v-list-item-title v-if="item.elegido == null" class="red--text">
+                                                    <i>Falta por sortear</i>
+                                                    <v-icon color="red darken-3" small>mdi-account-clock</v-icon>
+                                                </v-list-item-title>
+                                                <v-list-item-title v-else class="green--text"><i>Sorteado</i>
+                                                    <v-icon color="green darken-3" small>mdi-check-bold</v-icon>
+                                                </v-list-item-title>
                                             </v-list-item-content>
                                         </v-list-item>
                                     </v-list-item-group>
@@ -113,6 +138,7 @@
             vuetify: new Vuetify(),
             beforeMount() {
                 this.initFirebase()
+                this.getEstadoSorteo()
             },
             data: {
                 username: "",
@@ -126,14 +152,7 @@
                 lista: [],
                 user: {},
                 item: 0,
-                headers: [
-                    {
-                        text: 'Nombre',
-                        align: 'left',
-                        sortable: false,
-                        value: 'nombre',
-                    }
-                ],
+                sorteo: {}
             },
             methods: {
                 initFirebase() {
@@ -164,6 +183,7 @@
                                         // doc.data() is never undefined for query doc snapshots
                                         console.log(doc.id, " => ", doc.data().nombre);
                                         self.user = Object.assign({}, doc.data())
+                                        self.user.id = doc.id
                                         self.snackbar = true
                                         self.loading = false
                                         self.logged = true
@@ -194,6 +214,7 @@
                 },
                 getParticipantes(nombre) {
                     let self = this
+                    self.loading = true
                     this.lista = []
                     this.db.collection("usuarios").get()
                         .then(function (querySnapshot) {
@@ -213,6 +234,27 @@
                             self.snackbar = true
                             self.snackcolor = "error"
                             self.snackbartext = "Error al consultar participantes"
+                            self.loading = false
+                            console.log("Error getting documents: ", error);
+                        });
+                },
+                getEstadoSorteo() {
+                    let self = this
+                    self.loading = true
+                    this.sorteo = {}
+                    this.db.collection("sorteo").get()
+                        .then(function (querySnapshot) {
+                            var list = []
+                            var cont = 0
+                            querySnapshot.forEach(function (doc) {
+                                self.sorteo = Object.assign({}, doc.data())
+                            });
+                            self.loading = false
+                        })
+                        .catch(function (error) {
+                            self.snackbar = true
+                            self.snackcolor = "error"
+                            self.snackbartext = "Error al consultar sorteo"
                             self.loading = false
                             console.log("Error getting documents: ", error);
                         });
