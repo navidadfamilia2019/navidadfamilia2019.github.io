@@ -61,49 +61,33 @@
                         </v-btn>
                     </v-snackbar>
 
-                    <v-card v-if="logged">
-                        <center>
-                            <v-card-title class="primary">
-                                <v-avatar color="info">
-                                    <span class="white--text headline">{{initials}}</span>
+                    <v-layout align-center justify-center v-if="logged">
+                        <v-card width="600">
+                            <v-card-title class="green darken-3">
+                                <v-avatar color="red darken-3">
+                                    <v-icon large color="yellow darken-2">mdi-account-circle</v-icon>
                                 </v-avatar>
                                 <v-spacer></v-spacer>
-                                <h1>
-                                    {{user.name}}
-                                    {{user.lastname}}
+                                <h1 class="white--text">
+                                    {{username}}
                                 </h1>
                                 <v-spacer></v-spacer>
                             </v-card-title>
-                            <v-card-text class="secondary">
-                                <h2 v-if="user.admin == true" class="warning--text">
-                                    <v-icon color="warning">person</v-icon>Administrador
-                                </h2>
-                                <h2 v-else class="warning--text">
-                                    <v-icon color="warning">star</v-icon>Usuario
-                                </h2>
-                                <h2>{{user.email}}</h2>
+                            <v-card-text class="grey lighten-3">
+                                <center>
+                                    <h2>ESPERAR SORTEO</h2>
+                                    <v-chip color="green darken-3">
+                                        <v-avatar class="yellow darken-2">
+                                            <v-icon color="red darken-3">mdi-star</v-icon>
+                                        </v-avatar>
+                                    </v-chip>
+                                    <br />
+                                    <small>Espera para poder ver quien te tocó!</small>
+                                </center>
                             </v-card-text>
-                            <v-card-text>
-                                <h3>Puntos acumulados</h3>
-                                <v-progress-circular :rotate="-90" :size="100" :width="15" :value="user.bond"
-                                    color="primary">{{ user.bond }}</v-progress-circular>
-                                <br />
-                                <small>Estos puntos serán redimidos en su próxima compra</small>
-                            </v-card-text>
-                            <v-card-text class="secondary">
-                                <h3>CÓDIGO DE REFERIDO</h3>
-                                <v-chip color="primary">
-                                    <v-avatar class="info">
-                                        <v-icon>star</v-icon>
-                                    </v-avatar>
-                                    <strong>{{ user.referral_code }}</strong>
-                                </v-chip>
-                                <br />
-                                <small>Dile a tus amigos que se registren con este código para que recibas
-                                    bonificaciones!</small>
-                            </v-card-text>
-                        </center>
-                    </v-card>
+
+                        </v-card>
+                    </v-layout>
                 </v-container>
             </v-content>
         </v-app>
