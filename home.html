@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link rel="icon" href="favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Navidad Familia 2019 | Inicio</title>
+</head>
+
+<body>
+    <div id="app">
+        <v-app>
+            <v-content>
+                <v-toolbar color="red" fixed>
+                    <v-toolbar-title class="white--text">Navidad Familia 2019</v-toolbar-title>
+
+                    <div class="flex-grow-1"></div>
+                    <!-- v-if="$vuetify.breakpoint.smAndUp" -->
+                    <v-toolbar-items>
+                        <v-btn v-if="!logged" color="white" text href="signup.html">
+                            <v-icon left>mdi-account-plus</v-icon>
+                            Registro
+                        </v-btn>
+                        <v-btn v-else color="white" text href="index.html">
+                            <v-icon left>mdi-backspace</v-icon>
+                            SALIR
+                        </v-btn>
+                    </v-toolbar-items>
+                </v-toolbar>
+
+                <v-container>
+                    <v-layout align-center justify-center v-if="!logged">
+                        <v-card width="400" color="green lighten-4">
+                            <v-card-title>
+                                <v-spacer></v-spacer>
+                                <b>INGRESAR</b>
+                                <v-spacer></v-spacer>
+                            </v-card-title>
+                            <v-container>
+                                <v-text-field solo label="Usuario" v-model="username"></v-text-field>
+                                <v-text-field solo label="Contraseña" type="password" v-model="password">
+                                </v-text-field>
+                                <center>
+                                    <v-btn dark color="green darken-3" @click="login()" :loading="loading">
+                                        Ingresar
+                                        <v-icon right>mdi-account-check</v-icon>
+                                    </v-btn>
+                                </center>
+                            </v-container>
+                        </v-card>
+                    </v-layout>
+                    <v-snackbar v-model="snackbar" :timeout="3500" :color="snackcolor">
+                        {{snackbartext }}
+                        <v-btn color="white" text @click="snackbar = false">
+                            cerrar
+                        </v-btn>
+                    </v-snackbar>
+
+                    <v-layout align-center justify-center v-if="logged">
+                        <v-card width="600">
+                            <v-toolbar flat class="green darken-3">
+                                <v-avatar color="red darken-3">
+                                    <v-icon large color="yellow darken-2">mdi-pine-tree</v-icon>
+                                </v-avatar>
+                                <v-spacer></v-spacer>
+                                <h1 class="white--text">
+                                    {{user.nombre.toUpperCase()}}
+                                </h1>
+                                <v-spacer></v-spacer>
+                                <v-avatar color="red darken-3">
+                                    <v-icon large color="yellow darken-2">mdi-pine-tree</v-icon>
+                                </v-avatar>
+                            </v-toolbar>
+                            <v-progress-linear v-if="loading" indeterminate color="yellow darken-2"></v-progress-linear>
+                            <v-card-text class="grey lighten-3">
+                                <center>
+                                    <h2 v-if="sorteo.realizado == false">ESTADO DEL SORTEO: <label class="red--text">NO
+                                            DISPONIBLE AÚN</label></h2>
+                                    <h2 v-else>ESTADO DEL SORTEO: <label class="green--text">DISPONIBLE</label></h2>
+                                    <br />
+                                    <hr />
+                                    <br />
+                                    <h2 v-if="sorteo.realizado == false">ESPERAR SORTEO</h2>
+                                    <div>
+                                        <v-toolbar flat dark color="primary" v-if="user.elegido == null">
+                                            <h2>REALIZAR TU SORTEO</h2>
+                                            <v-spacer></v-spacer>
+                                            <v-btn large color="green" dark @click="sort()">REALIZAR</v-btn>
+                                        </v-toolbar>
+                                        <h2 v-else>TE HA TOCADO: <label class="primary--text">{{user.elegido}}</label>
+                                        </h2>
+                                    </div>
+                                    <br />
+                                    <hr />
+                                </center>
+                                <v-list v-if="lista.length > 0" rounded>
+                                    <v-subheader>PARTICIPANTES</v-subheader>
+                                    <v-list-item-group v-model="item" color="primary">
+                                        <v-list-item v-for="(item, i) in lista" :key="i">
+                                            <v-list-item-icon>
+                                                <v-icon color="yellow darken-3">mdi-star</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>{{item.nombre.toUpperCase()}}</v-list-item-title>
+                                                <v-list-item-title v-if="item.elegido == null" class="red--text">
+                                                    <i>Falta por sortear</i>
+                                                    <v-icon color="red darken-3" small>mdi-account-clock</v-icon>
+                                                </v-list-item-title>
+                                                <v-list-item-title v-else class="green--text"><i>Sorteado</i>
+                                                    <v-icon color="green darken-3" small>mdi-check-bold</v-icon>
+                                                </v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                    </v-list-item-group>
+                                </v-list>
+                            </v-card-text>
+                        </v-card>
+                    </v-layout>
+                </v-container>
+            </v-content>
+        </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.2.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.2.3/firebase-firestore.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            beforeMount() {
+                this.initFirebase()
+                this.getEstadoSorteo()
+            },
+            data: {
+                username: "",
+                password: "",
+                snackbar: false,
+                snackbartext: "",
+                snackcolor: "",
+                logged: false,
+                loading: false,
+                db: null,
+                lista: [],
+                user: {},
+                item: 0,
+                sorteo: {}
+            },
+            methods: {
+                initFirebase() {
+                    var firebaseConfig = {
+                        apiKey: "AIzaSyAIkUie5qjlEObq7VMqa6jJhn7k76G6iU0",
+                        authDomain: "navidad-2019.firebaseapp.com",
+                        databaseURL: "https://navidad-2019.firebaseio.com",
+                        projectId: "navidad-2019",
+                        storageBucket: "navidad-2019.appspot.com",
+                        messagingSenderId: "114178192273",
+                        appId: "1:114178192273:web:661b9035f61d330f00a030",
+                        measurementId: "G-RQ883D96YY"
+                    };
+                    // Initialize Firebase
+                    firebase.initializeApp(firebaseConfig);
+                    this.db = firebase.firestore();
+                },
+                login() {
+                    this.loading = true
+                    if (this.username != '' && this.password != '') {
+                        var self = this
+                        this.db.collection("usuarios").where("nombre", "==", this.username).where("password", "==", this.password)
+                            .get()
+                            .then(function (querySnapshot) {
+                                let result = querySnapshot.docs
+                                if (result.length > 0) {
+                                    querySnapshot.forEach(function (doc) {
+                                        // doc.data() is never undefined for query doc snapshots
+                                        console.log(doc.id, " => ", doc.data().nombre);
+                                        self.user = Object.assign({}, doc.data())
+                                        self.user.id = doc.id
+                                        self.snackbar = true
+                                        self.loading = false
+                                        self.logged = true
+                                        self.snackcolor = "success"
+                                        self.snackbartext = "Ingreso exitoso! " + self.user.nombre
+                                        self.getParticipantes(doc.data().nombre)
+                                    });
+                                } else {
+                                    self.snackbar = true
+                                    self.loading = false
+                                    self.snackcolor = "error"
+                                    self.snackbartext = "Usuario no encontrado"
+                                }
+                            })
+                            .catch(function (error) {
+                                self.snackbar = true
+                                self.snackcolor = "error"
+                                self.snackbartext = "Error al login"
+                                self.loading = false
+                                console.log("Error getting documents: ", error);
+                            });
+                    } else {
+                        this.snackbar = true
+                        this.snackcolor = "error"
+                        this.snackbartext = "Llene los campos"
+                        this.loading = false
+                    }
+                },
+                getParticipantes(nombre) {
+                    let self = this
+                    self.loading = true
+                    this.lista = []
+                    this.db.collection("usuarios").get()
+                        .then(function (querySnapshot) {
+                            var list = []
+                            var cont = 0
+                            querySnapshot.forEach(function (doc) {
+                                if (doc.data().nombre == nombre) {
+                                    self.item = cont
+                                }
+                                list.push(doc.data())
+                                cont++
+                            });
+                            self.lista = list
+                            self.loading = false
+                        })
+                        .catch(function (error) {
+                            self.snackbar = true
+                            self.snackcolor = "error"
+                            self.snackbartext = "Error al consultar participantes"
+                            self.loading = false
+                            console.log("Error getting documents: ", error);
+                        });
+                },
+                getEstadoSorteo() {
+                    let self = this
+                    self.loading = true
+                    this.sorteo = {}
+                    this.db.collection("sorteo").get()
+                        .then(function (querySnapshot) {
+                            var list = []
+                            var cont = 0
+                            querySnapshot.forEach(function (doc) {
+                                self.sorteo = Object.assign({}, doc.data())
+                            });
+                            self.loading = false
+                        })
+                        .catch(function (error) {
+                            self.snackbar = true
+                            self.snackcolor = "error"
+                            self.snackbartext = "Error al consultar sorteo"
+                            self.loading = false
+                            console.log("Error getting documents: ", error);
+                        });
+                },
+                sort() {
+                    console.log("SORTEO!");
+                    
+                }
+            }
+        })
+    </script>
+    <style>
+        #app {
+            font-family: 'Ubuntu', sans-serif;
+        }
+    </style>
+</body>
+
+</html>
